@@ -26,7 +26,6 @@ object Calc: TCalc
     Align = alTop
     BevelInner = bvLowered
     TabOrder = 4
-    ExplicitWidth = 624
     object edtCalcStr: TEdit
       Left = 2
       Top = 2
@@ -42,9 +41,6 @@ object Calc: TCalc
       ParentCtl3D = False
       ReadOnly = True
       TabOrder = 0
-      ExplicitLeft = 4
-      ExplicitTop = 0
-      ExplicitWidth = 620
     end
     object edtInput: TEdit
       Left = 2
@@ -61,10 +57,6 @@ object Calc: TCalc
       ParentCtl3D = False
       TabOrder = 1
       OnKeyPress = edtInputKeyPress
-      ExplicitLeft = 24
-      ExplicitTop = 12
-      ExplicitWidth = 121
-      ExplicitHeight = 21
     end
   end
   object pnlTopSpace: TPanel
@@ -75,7 +67,6 @@ object Calc: TCalc
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    ExplicitWidth = 624
   end
   object pnl789: TPanel
     Left = 0
@@ -85,7 +76,6 @@ object Calc: TCalc
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 2
-    ExplicitWidth = 624
     object btnDel: TBitBtn
       AlignWithMargins = True
       Left = 145
@@ -100,7 +90,6 @@ object Calc: TCalc
       Caption = '<-'
       TabOrder = 4
       OnClick = btnDelClick
-      ExplicitLeft = 5
     end
     object btn8: TBitBtn
       AlignWithMargins = True
@@ -115,7 +104,6 @@ object Calc: TCalc
       Align = alLeft
       Caption = '8'
       TabOrder = 1
-      ExplicitLeft = 5
     end
     object btn7: TBitBtn
       AlignWithMargins = True
@@ -145,7 +133,6 @@ object Calc: TCalc
       Caption = '/'
       TabOrder = 3
       OnClick = btnDivClick
-      ExplicitLeft = 5
     end
     object btn9: TBitBtn
       AlignWithMargins = True
@@ -160,7 +147,6 @@ object Calc: TCalc
       Align = alLeft
       Caption = '9'
       TabOrder = 2
-      ExplicitLeft = 5
     end
   end
   object Panel456: TPanel
@@ -171,7 +157,6 @@ object Calc: TCalc
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 1
-    ExplicitWidth = 624
     object btn4: TBitBtn
       AlignWithMargins = True
       Left = 5
@@ -185,8 +170,6 @@ object Calc: TCalc
       Align = alLeft
       Caption = '4'
       TabOrder = 0
-      ExplicitLeft = 13
-      ExplicitTop = 10
     end
     object btn5: TBitBtn
       AlignWithMargins = True
@@ -201,8 +184,6 @@ object Calc: TCalc
       Align = alLeft
       Caption = '5'
       TabOrder = 1
-      ExplicitLeft = 48
-      ExplicitTop = 10
     end
     object btn6: TBitBtn
       AlignWithMargins = True
@@ -217,8 +198,6 @@ object Calc: TCalc
       Align = alLeft
       Caption = '6'
       TabOrder = 2
-      ExplicitLeft = 83
-      ExplicitTop = 10
     end
     object btnMulti: TBitBtn
       AlignWithMargins = True
@@ -234,8 +213,6 @@ object Calc: TCalc
       Caption = '*'
       TabOrder = 3
       OnClick = btnMultiClick
-      ExplicitLeft = 118
-      ExplicitTop = 10
     end
     object btnClear: TBitBtn
       AlignWithMargins = True
@@ -251,8 +228,6 @@ object Calc: TCalc
       Caption = 'CE'
       TabOrder = 4
       OnClick = btnClearClick
-      ExplicitLeft = 153
-      ExplicitTop = 10
     end
   end
   object Panel1: TPanel
@@ -263,10 +238,6 @@ object Calc: TCalc
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 3
-    ExplicitLeft = 304
-    ExplicitTop = 328
-    ExplicitWidth = 185
-    ExplicitHeight = 41
     object Panel2: TPanel
       Left = 141
       Top = 0
@@ -275,7 +246,6 @@ object Calc: TCalc
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 0
-      ExplicitLeft = 149
       object btnTotal: TBitBtn
         AlignWithMargins = True
         Left = 5
@@ -300,9 +270,6 @@ object Calc: TCalc
       Align = alClient
       BevelOuter = bvNone
       TabOrder = 1
-      ExplicitLeft = 8
-      ExplicitWidth = 108
-      ExplicitHeight = 306
       object Panel4: TPanel
         Left = 0
         Top = 0
@@ -311,8 +278,6 @@ object Calc: TCalc
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 1
-        ExplicitTop = 8
-        ExplicitWidth = 108
         object btn1: TBitBtn
           AlignWithMargins = True
           Left = 5
@@ -379,8 +344,6 @@ object Calc: TCalc
         Align = alTop
         BevelOuter = bvNone
         TabOrder = 0
-        ExplicitTop = 100
-        ExplicitWidth = 624
         object btn0: TBitBtn
           AlignWithMargins = True
           Left = 5
@@ -408,7 +371,6 @@ object Calc: TCalc
           Align = alLeft
           Caption = ','
           TabOrder = 1
-          ExplicitLeft = 40
         end
         object btnAdd: TBitBtn
           AlignWithMargins = True
@@ -424,7 +386,6 @@ object Calc: TCalc
           Caption = '+'
           TabOrder = 2
           OnClick = btnAddClick
-          ExplicitLeft = 75
         end
       end
     end

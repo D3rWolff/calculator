@@ -2,7 +2,7 @@ program Calculator;
 
 uses
   Vcl.Forms,
-  UMain in 'UMain.pas' {Form1},
+  UMain in 'UMain.pas' {Calc},
   UCalc in 'UCalc.pas';
 
 {$R *.res}
@@ -10,6 +10,6 @@ uses
 begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TCalc, Calc);
   Application.Run;
 end.

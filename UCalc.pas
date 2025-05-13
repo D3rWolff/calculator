@@ -5,19 +5,23 @@ interface
 uses
   // Delphi
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes,
-  System.StrUtils;
+  System.StrUtils, System.Generics.Collections;
 
 type
   TCalcOperator = (coNone, coMultiply, coDivide, coAdd, coSubtract);
 
+  TValueRecord = record
+    Value:      Double;
+    IsOperator: Boolean;
+  end;
+
   TCalculator = class
   private
-    fValuesArray:    Variant;
+//    fValuesArray:    Variant;
+    fValuesArray: TList<TValueRecord>;
 
     function VarTypeIsString(aValue: Variant): Boolean;
-    procedure GetBounds(
-      var aLowBound:  Integer;
-      var aHighBound: Integer);
+    function ValidateValueAsDouble(aValue: String): Double;
   public
     constructor Create;
     destructor Destroy;
@@ -29,104 +33,105 @@ type
 
 implementation
 
+const
+  cInvalidNumber = '"%s" is not a valid number!';
+
 { TCalculator }
 
-// wert dem Array hinzufügen
+// add aValue to the array
 procedure TCalculator.AddValue(aValue: Variant);
 var
   aHighBound: Integer;
-  aPrevValue: Integer;
-  aValInt:    Integer;
-  aValDbl:    Double;
-  aError:     Integer;
-  aTestVal:   Variant;
+  aStrVal:    String;
+  aVarValue:  Variant;
+  aValRecord: TValueRecord;
 begin
-  aHighBound := VarArrayHighBound(fValuesArray, 1) + 1;
+  aHighBound            := fValuesArray.Count;
+  aValRecord.IsOperator := False;
 
-  if not VarTypeIsString(aValue) then
+  if VarTypeIsString(aValue) then
+  begin
+    aStrVal := VarToStr(aValue);
+    if Length(aStrVal) = 1 then
+    begin
+      aValRecord.IsOperator := True;
+      case aStrVal[1] of
+        '*': aValRecord.Value := Integer(coMultiply);
+        '/': aValRecord.Value := Integer(coDivide);
+        '+': aValRecord.Value := Integer(coAdd);
+        '-': aValRecord.Value := Integer(coSubtract);
+        else
+        begin
+          aValRecord.Value      := ValidateValueAsDouble(aStrVal);
+          aValRecord.IsOperator := False;
+        end;
+      end;
+    end
+    else
+      aValRecord.Value      := ValidateValueAsDouble(aStrVal);
+  end
+  else if VarType(aValue) = varDouble then
+    aValRecord.Value := aValue
+  else
   begin
     if (TCalcOperator(aValue) = coNone) then
       exit;
 
-    aPrevValue := aHighBound - 1;
-    if (aPrevValue > 1) then
-    begin
-      if not(VarTypeIsString(VarArrayGet(fValuesArray, aPrevValue))) then
-      begin
-        aTestVal := VarArrayGet(fValuesArray, aPrevValue);
-        if (TCalcOperator(aTestVal) in [coMultiply..coSubtract]) then
-        begin
-          VarArrayRedim(fValuesArray, aPrevValue); // vorherigen Operator löschen
-          Dec(aHighBound);
-        end;
-      end;
-    end;
+    aValRecord.Value      := aValue;
+    aValRecord.IsOperator := True;
+
+    if (aHighBound > 1) and (fValuesArray[aHighBound - 1].IsOperator) then
+      fValuesArray.Delete(aHighBound - 1);
   end;
 
-  VarArrayRedim(fValuesArray, aHighBound);
-  if (VarTypeIsString(aValue) and (VarToStr(aValue) <> '')) or
-     (not VarTypeIsString(aValue) and (TCalcOperator(aValue) > coNone)) then
-    VarArrayPut(fValuesArray, aValue, aHighBound); // nur hinzufügen wenn nicht leer
+  if aValRecord.IsOperator and (fValuesArray.Count = 0) then
+    exit; // only add the operator
+
+  fValuesArray.Add(aValRecord);
 end;
 
 constructor TCalculator.Create;
 begin
- fValuesArray := VarArrayCreate([0, 0], varVariant);
+ fValuesArray := TList<TValueRecord>.Create;
  ResetCalculator;
 end;
 
 destructor TCalculator.Destroy;
 begin
   ResetCalculator;
-  VarClear(fValuesArray);
+  fValuesArray.Free;
 end;
 
-// die Größe des Array ermitteln
-procedure TCalculator.GetBounds(
-  var aLowBound:  Integer;
-  var aHighBound: Integer);
-begin
-  aLowBound  := VarArrayLowBound(fValuesArray, 1) + 1;
-  aHighBound := VarArrayHighBound(fValuesArray, 1);
-end;
-
-// die Funktion als String zurück geben
+// return the function as a string for display
 function TCalculator.GetCalcString: String;
 var
-  aLowBound:  Integer;
-  aHighBound: Integer;
-  i:          Integer;
-  aValue:     Variant;
+  aValue: TValueRecord;
 begin
-  GetBounds(aLowBound, aHighBound);
-  Result     := '';
+  Result := '';
 
-  for i := aLowBound to aHighBound do
+  for aValue in fValuesArray do
   begin
     if Result <> '' then
       Result := Result + ' ';
 
-    aValue := VarArrayGet(fValuesArray, i);
-
-    if VarTypeIsString(aValue) then
-      Result := Result + VarToStr(aValue)
-    else
-      case TCalcOperator(aValue) of
+    if aValue.IsOperator then
+    begin
+      case TCalcOperator(Round(aValue.Value)) of
         coMultiply: Result := Result + '*';
         coDivide:   Result := Result + '/';
         coAdd:      Result := Result + '+';
         coSubtract: Result := Result + '-';
       end;
+    end
+    else
+      Result := Result + VarToStr(aValue.Value);
   end;
 end;
 
-// Den Wert berechnen der Reihe nach
+// calculate the value of the expression
 function TCalculator.GetResult: String;
 var
-  aLowBound:  Integer;
-  aHighBound: Integer;
-  aValue:     Variant;
-  i:          Integer;
+  aValue:     TValueRecord;
   aValue1:    Double;
   aValue2:    Double;
   aOperator:  TCalcOperator;
@@ -135,28 +140,32 @@ var
   aDoCalc:    Boolean;
   aHasCalc:   Boolean;
 begin
-  GetBounds(aLowBound, aHighBound);
   aStart    := True;
   aDoCalc   := False;
   aHasCalc  := False;
   aOperator := coNone;
 
-  for i := aLowBound to aHighBound do
+  for aValue in fValuesArray do
   begin
-    aValue := VarArrayGet(fValuesArray, i);
-    if VarTypeIsString(aValue) then
+    if aValue.IsOperator then
+    begin
+      aOperator := TCalcOperator(Round(aValue.Value));
+      aDoCalc   := True;
+    end
+    else
     begin
       if aStart then
       begin
-        aValue1 := VarArrayGet(fValuesArray, i);
+        aValue1 := aValue.Value;
         aStart  := False;
+        aResult := aValue1;      // save first value to Result
       end
       else if aHasCalc then
         aValue1 := aResult;
 
       if aDoCalc then
       begin
-        aValue2 := VarArrayGet(fValuesArray, i);
+        aValue2 := aValue.Value;
 
         case aOperator of
           coMultiply: aResult := aValue1 * aValue2;
@@ -169,24 +178,31 @@ begin
         aDoCalc   := False;
         aHasCalc  := True;
       end;
-    end
-    else
-    begin
-      aOperator := VarArrayGet(fValuesArray, i);
-      aDoCalc   := True;
     end;
   end;
 
   Result := aResult.ToString;
 end;
 
-// alle werte löschen
+// clear all values
 procedure TCalculator.ResetCalculator;
 begin
-  VarArrayRedim(fValuesArray, 0);
+  fValuesArray.Clear;
 end;
 
-// prüfen ob der bestimmte Variant einer der String-Arten ist
+// validate a given string and return it as double
+function TCalculator.ValidateValueAsDouble(aValue: String): Double;
+var
+  aValDbl: Double;
+begin
+  Result := 0.0;
+  if TryStrToFloat(aValue, aValDbl) then
+    Result := aValDbl
+  else
+    raise Exception.Create(Format(cInvalidNumber, [aValue]));
+end;
+
+// validate if the variant is any of the string types
 function TCalculator.VarTypeIsString(aValue: Variant): Boolean;
 begin
   Result := (VarType(aValue) = varString) or

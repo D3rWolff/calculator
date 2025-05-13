@@ -76,12 +76,14 @@ implementation
 procedure TCalc.AddOperatorToCalculator(aValue: Variant; var aClearKey: Boolean);
 begin
   if (edtInput.Text <> '') then
+  begin
     AddToCalculator;
 
-  fCalculator.AddValue(aValue);
-  edtCalcStr.Text := fCalculator.GetCalcString;
-  edtInput.Text   := '';
-  aClearKey       := True;
+    fCalculator.AddValue(aValue);
+    edtCalcStr.Text := fCalculator.GetCalcString;
+    edtInput.Text   := '';
+    aClearKey       := True;
+  end;
 end;
 
 // den Input zum Calculator hinzufügen
@@ -142,16 +144,20 @@ var
 begin
   if TBitBtn(Sender).Name = 'btnDecimal' then
   begin
-    aFormatSettings := TFormatSettings.Create;
-    edtInput.Text   := edtInput.Text + aFormatSettings.DecimalSeparator;
-  end
-  else if (TBitBtn(Sender).Name = 'btn0') then
-  begin
     if (edtInput.Text = '') then
       edtInput.Text := '0';
+
+    aFormatSettings := TFormatSettings.Create;
+    if Pos(aFormatSettings.DecimalSeparator, edtInput.Text) = 0 then
+      edtInput.Text := edtInput.Text + aFormatSettings.DecimalSeparator;
   end
   else
-    edtInput.Text := edtInput.Text + TBitBtn(Sender).Caption;
+  begin
+    if (edtInput.Text = '') or (edtInput.Text = '0') then
+      edtInput.Text := TBitBtn(Sender).Caption
+    else
+      edtInput.Text := edtInput.Text + TBitBtn(Sender).Caption;
+  end;
 end;
 
 // Das Resultat berechnen

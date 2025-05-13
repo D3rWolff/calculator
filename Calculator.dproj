@@ -124,7 +124,7 @@
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
         <DCCReference Include="UMain.pas">
-            <Form>Form1</Form>
+            <Form>Calc</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="UCalc.pas"/>
