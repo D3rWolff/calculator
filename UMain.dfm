@@ -56,7 +56,6 @@ object Calc: TCalc
       NumbersOnly = True
       ParentCtl3D = False
       TabOrder = 1
-      OnKeyPress = edtInputKeyPress
     end
   end
   object pnlTopSpace: TPanel

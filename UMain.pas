@@ -5,10 +5,13 @@ interface
 uses
   // Delphi
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Variants, System.Classes, Vcl.Graphics,
-  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Buttons,
+  Vcl.Controls, Vcl.Forms, Vcl.Dialogs, Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Buttons, Vcl.Clipbrd,
 
   // Calculator
   UCalc;
+
+// uncomment this for Test Infor
+{$DEFINE Testing}
 
 type
   TCalc = class(TForm)
@@ -41,7 +44,6 @@ type
     btnDecimal: TBitBtn;
     btnAdd: TBitBtn;
     btnTotal: TBitBtn;
-    procedure edtInputKeyPress(Sender: TObject; var Key: Char);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnDivClick(Sender: TObject);
@@ -57,10 +59,14 @@ type
     { Private-Deklarationen }
     fCalculator: TCalculator;
 
-    procedure NumericButtonClick(Sender: TObject);
+    procedure AddOperatorToCalculator(aValue: TValueRecord);
     procedure AddToCalculator;
-    procedure AddOperatorToCalculator(aValue: Variant; var aClearKey: Boolean);
     procedure CalculateResult;
+    procedure NumericButtonClick(Sender: TObject);
+    function PrepareCalculatorOperatorValue(aOperator: TCalcOperator): TValueRecord;
+    procedure SetEditFocus(
+      aEdit:      TEdit;
+      aSelectAll: Boolean = False);
   public
     { Public-Deklarationen }
   end;
@@ -73,30 +79,33 @@ implementation
 {$R *.dfm}
 
 // einer der Operatoren zum Calculator hinzufügen
-procedure TCalc.AddOperatorToCalculator(aValue: Variant; var aClearKey: Boolean);
+procedure TCalc.AddOperatorToCalculator(aValue: TValueRecord);
 begin
   if (edtInput.Text <> '') then
-  begin
     AddToCalculator;
 
-    fCalculator.AddValue(aValue);
-    edtCalcStr.Text := fCalculator.GetCalcString;
-    edtInput.Text   := '';
-    aClearKey       := True;
-  end;
+  fCalculator.AddValue(aValue);
+  edtCalcStr.Text := fCalculator.CalcExpresion;
+  edtInput.Text   := '';
+
+  SetEditFocus(edtInput);
 end;
 
 // den Input zum Calculator hinzufügen
 procedure TCalc.AddToCalculator;
+var
+  aValue: TValueRecord;
 begin
-  fCalculator.AddValue(edtInput.Text);
+  aValue.Value      := StrToFloat(edtInput.Text);
+  aValue.IsOperator := False;
+  fCalculator.AddValue(aValue);
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnAddClick(Sender: TObject);
-var
-  aClearKey: Boolean;
 begin
-  AddOperatorToCalculator(coAdd, aClearKey);
+  AddOperatorToCalculator(PrepareCalculatorOperatorValue(coAdd));
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnClearClick(Sender: TObject);
@@ -104,37 +113,37 @@ begin
   fCalculator.ResetCalculator;
   edtCalcStr.Text := '';
   edtInput.Text   := '';
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnDelClick(Sender: TObject);
 begin
   edtInput.Text := Copy(edtInput.Text, 1, Length(edtInput.Text) - 1);
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnDivClick(Sender: TObject);
-var
-  aClearKey: Boolean;
 begin
-  AddOperatorToCalculator(coDivide, aClearKey);
+  AddOperatorToCalculator(PrepareCalculatorOperatorValue(coDivide));
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnMultiClick(Sender: TObject);
-var
-  aClearKey: Boolean;
 begin
-  AddOperatorToCalculator(coMultiply, aClearKey);
+  AddOperatorToCalculator(PrepareCalculatorOperatorValue(coMultiply));
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnSubtractClick(Sender: TObject);
-var
-  aClearKey: Boolean;
 begin
-  AddOperatorToCalculator(coSubtract, aClearKey);
+  AddOperatorToCalculator(PrepareCalculatorOperatorValue(coSubtract));
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.btnTotalClick(Sender: TObject);
 begin
   CalculateResult;
+  SetEditFocus(edtInput);
 end;
 
 // einer der numerischen Buttons klicken
@@ -158,33 +167,57 @@ begin
     else
       edtInput.Text := edtInput.Text + TBitBtn(Sender).Caption;
   end;
+
+  SetEditFocus(edtInput);
+end;
+
+function TCalc.PrepareCalculatorOperatorValue(aOperator: TCalcOperator): TValueRecord;
+begin
+  Result.Value      := Integer(aOperator);
+  Result.IsOperator := True;
+end;
+
+procedure TCalc.SetEditFocus(
+  aEdit:      TEdit;
+  aSelectAll: Boolean = False);
+begin
+  aEdit.SetFocus;
+
+  if aSelectAll then
+    aEdit.SelectAll
+  else
+  begin
+    aEdit.SelStart  := Length(aEdit.Text);
+    aEdit.SelLength := 0;
+  end;
 end;
 
 // Das Resultat berechnen
 procedure TCalc.CalculateResult;
+{$IFDEF Testing}
+var
+  aInfixNotation:   String;
+  aPostfixNotation: String;
+  aDisplayString:   String;
+{$ENDIF Testing}
 begin
   AddToCalculator;
-  edtCalcStr.Text := fCalculator.GetCalcString;
-  edtInput.Text   := fCalculator.GetResult;
+{$IFDEF Testing}
+  aInfixNotation   := fCalculator.CalcExpresion;
+  aPostfixNotation := fCalculator.ReversePolishNotationString;
+  edtCalcStr.Text  := aInfixNotation;
+  aDisplayString   :=
+    'Infix Notation:' + sLineBreak + aInfixNotation + sLineBreak + sLineBreak +
+    'Reverse Polish Notation (PostFix notation):' + sLineBreak + aPostfixNotation;
+  Clipboard.AsText := aDisplayString;
+  MessageDlg(aDisplayString, mtInformation, [mbOk], 0);
+{$ELSE}
+  edtCalcStr.Text := fCalculator.CalcExpresion;
+  edtInput.Text   := fCalculator.Evaluate.ToString;
+{$ENDIF Testing}
+  edtInput.Text   := fCalculator.Evaluate.ToString;
   fCalculator.ResetCalculator;
-end;
-
-procedure TCalc.edtInputKeyPress(Sender: TObject; var Key: Char);
-var
-  aClearKey: Boolean;
-begin
-  aClearKey := False;
-  case Key of
-    '*': AddOperatorToCalculator(coMultiply, aClearKey);
-    '/': AddOperatorToCalculator(coDivide, aClearKey);
-    '+': AddOperatorToCalculator(coAdd, aClearKey);
-    '-': AddOperatorToCalculator(coSubtract, aClearKey);
-    '=': CalculateResult;
-    Chr(VK_DELETE), Chr(VK_BACK): aClearKey := True; // Key leeren
-  end;
-
-  if aClearKey then
-    Key := #0;
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.FormCreate(Sender: TObject);
@@ -210,13 +243,40 @@ begin
 end;
 
 procedure TCalc.FormKeyPress(Sender: TObject; var Key: Char);
+var
+  aClearKey: Boolean;
 begin
-  edtInputKeyPress(Sender, Key);
+  aClearKey := True;
+  case Key of
+    '*': AddOperatorToCalculator(PrepareCalculatorOperatorValue(coMultiply));
+    '/': AddOperatorToCalculator(PrepareCalculatorOperatorValue(coDivide));
+    '+': AddOperatorToCalculator(PrepareCalculatorOperatorValue(coAdd));
+    '-': AddOperatorToCalculator(PrepareCalculatorOperatorValue(coSubtract));
+    '(':
+    begin
+      AddOperatorToCalculator(PrepareCalculatorOperatorValue(coParenthesesLeft));
+      aClearKey := True; // clear Key value
+    end;
+    ')':
+    begin
+      AddOperatorToCalculator(PrepareCalculatorOperatorValue(coParenthesesRight));
+      aClearKey := True; // clear Key value
+    end;
+    '=': CalculateResult;
+    Chr(VK_DELETE), Chr(VK_BACK): aClearKey := True; // clear Key value
+    else
+      aClearKey := False;
+  end;
+
+  if aClearKey then
+    Key := #0;
+
+  SetEditFocus(edtInput);
 end;
 
 procedure TCalc.FormShow(Sender: TObject);
 begin
-  edtInput.SetFocus;
+  SetEditFocus(edtInput);
 end;
 
 end.
